@@ -1,43 +1,11 @@
 package com.company.treasurehunt;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
 
-    static class Point {
-        int x, y;
-
-        public Point(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Point point = (Point) o;
-            return x == point.x &&
-                    y == point.y;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(x, y);
-        }
-    }
-
-    static final int[][] DIRECTIONS = {
-            {0, -1}, //UP
-            {1, 0}, //RIGHT
-            {-1, 0}, //LEFT
-            {0, 1}  //DOWN
-    };
-
     public static void main(String[] args) {
-        List<Point> obstacles = new ArrayList<>();
-        Point start = new Point(0, 0);
-
         //construct the map
         String[][] map = {
                 {"#", "#", "#", "#", "#", "#", "#", "#"},
@@ -48,75 +16,113 @@ public class Main {
                 {"#", "#", "#", "#", "#", "#", "#", "#"}
         };
 
-        //get the column and row size
-        int columnSize = map.length;
-        int rowSize = map[0].length;
+        int[] start = new int[1];
 
-        //locate the obstacles, clearPaths, and starting point
-        for (int x = 0; x < columnSize; x++) {
-            for (int y = 0; y < rowSize; y++) {
-                if (map[x][y] == "#") {
-                    obstacles.add(new Point(x, y));
-                }
+        //locate the starting point
+        for (int x = 0; x < map.length; x++) {
+            for (int y = 0; y < map[0].length; y++) {
                 if (map[x][y] == "X") {
-                    start = new Point(x, y);
+                    start = new int[]{x, y};
                 }
             }
         }
 
-        List<Point> treasures = findTreasureLocation(obstacles, columnSize, rowSize, start);
-        printMap(map, treasures);
-    }
+        List<int[]> treasure = new ArrayList<>();
+        int colLength = map[0].length;
+        int startRow = start[0];
+        int startColumn = start[1];
 
-    private static List<Point> findTreasureLocation(List<Point> obstacles, int columnSize, int rowSize, Point start) {
-        List<Point> treasures = new ArrayList<>();
-        List<Point> visited = new ArrayList<>();
-        LinkedList<Point> nextToVisit = new LinkedList<>();
-        nextToVisit.add(start);
+        //holds previous coordinate for north, east, and south
+        int prevNorthRow = 0;
+        int prevNorthCol = 0;
+        int prevEastRow = 0;
+        int prevEastCol = 0;
+        int prevSouthRow = 0;
+        int prevSouthCol = 0;
 
-        while (!nextToVisit.isEmpty()) {
-            Point current = nextToVisit.remove();
-
-            Point newLoc = null;
-            //steps
-            for (int[] direction : DIRECTIONS) {
-                newLoc = new Point(current.x + direction[0], current.y + direction[1]);
-                if (!isValidLocation(current.x, current.y, columnSize, rowSize) ||
-                        visited.contains(current)) {
-                    continue;
+        //lets iterate from starting row
+        for (int row = 1; row <= startRow; row++) {
+            int currRow = startRow;
+            int currCol = startColumn;
+            //go north
+            boolean validNorth = false;
+            int north = 0;
+            while (north < row) {
+                north++;
+                currRow = startRow - north;
+                currCol = startColumn;
+                validNorth = isValidLocation(map, currRow, currCol);
+                if (validNorth && currRow != prevNorthRow && currCol != prevNorthCol) { //north location is valid and its not yet check
+                    prevNorthRow = currRow;
+                    prevNorthCol = currCol;
+                    break; //break here, check east
                 }
-                if (obstacles.contains(current)) {
-                    visited.add(current);
-                    continue;
-                }
-                nextToVisit.add(newLoc);
-                visited.add(current);
             }
-            treasures.add(newLoc);
+            if (!validNorth) {
+                continue;
+            }
+
+            //go east
+            int east = 0;
+            boolean validEast = false;
+            while (east < colLength - 1) {
+                east++;
+                currRow = startRow - north;
+                currCol = startColumn + east;
+                validEast = isValidLocation(map, currRow, currCol);
+                if (validEast && currRow != prevEastRow && currCol != prevEastCol) { //east location is valid and its not yet check
+                    prevEastRow = currRow;
+                    prevEastCol = currCol;
+                    break; //break here, check south
+                }
+            }
+            if (!validEast) {
+                continue;
+            }
+
+            //go south
+            int south = 0;
+            boolean validSouth = false;
+            while (south < row) {
+                south++;
+                currRow = startRow - north + south;
+                currCol = startColumn + east;
+                validSouth = isValidLocation(map, currRow, currCol);
+                if (validSouth && currRow != prevSouthRow && currCol != prevSouthCol) { //south location is valid and its not yet check
+                    prevSouthRow = currRow;
+                    prevSouthCol = currCol;
+                    break;
+                }
+            }
+            if (validSouth) {
+                treasure.add(new int[]{currRow, currCol});
+            }
+
         }
 
-        return treasures;
+        printMap(map, treasure);
     }
 
-    private static boolean isValidLocation(int x, int y, int columnSize, int rowSize) {
-        if (x < 0 || x >= columnSize || y < 0 || y >= rowSize) {
+    private static boolean isValidLocation(String[][] map, int row, int col) {
+        // check valid location, its inside the boundary and not equals to #
+        if (row < 0 || row >= map.length || col < 0 || col >= map[0].length
+                || map[row][col].equals("#")) {
             return false;
         }
         return true;
     }
 
-    private static void printMap(String[][] map, List<Point> treasures) {
-        System.out.print("Treasure Location:");
-        for (Point p : treasures) {
-            System.out.printf("(%d, %d) ", p.x, p.y);
+    private static void printMap(String[][] map, List<int[]> treasure) {
+        System.out.println("Treasure Location:");
+        for (int[] coordinate : treasure) {
+            System.out.printf("(%d, %d)\n", coordinate[0], coordinate[1]);
+            map[coordinate[0]][coordinate[1]] = "$";
         }
 
-        System.out.println();
-        //Print the map and treasure location
         for (int x = 0; x < map.length; x++) {
             for (int y = 0; y < map[0].length; y++) {
                 String val = map[x][y];
-                if (treasures.contains(new Point(y, x))) {
+                if (treasure.contains(new int[]{x, y})) {
                     val = "$";
                 }
                 System.out.print(val);
