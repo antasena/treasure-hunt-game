@@ -29,25 +29,21 @@ public class Main {
 
         List<int[]> treasure = new ArrayList<>();
         int colLength = map[0].length;
+        int rowLength = map.length;
         int startRow = start[0];
         int startColumn = start[1];
 
         //holds previous coordinate for north, east, and south
-        int prevNorthRow = 0;
-        int prevNorthCol = 0;
-        int prevEastRow = 0;
-        int prevEastCol = 0;
-        int prevSouthRow = 0;
-        int prevSouthCol = 0;
+        int prevNorthRow = 0, prevNorthCol = 0, prevEastRow = 0, prevEastCol = 0, prevSouthRow = 0, prevSouthCol = 0;
 
-        //lets iterate from starting row
+        //lets iterate from 1 to starting row
         for (int row = 1; row <= startRow; row++) {
             int currRow = startRow;
             int currCol = startColumn;
-            //go north
+            //go north first
             boolean validNorth = false;
             int north = 0;
-            while (north < row) {
+            while (north < rowLength - row) {
                 north++;
                 currRow = startRow - north;
                 currCol = startColumn;
@@ -65,7 +61,7 @@ public class Main {
             //go east
             int east = 0;
             boolean validEast = false;
-            while (east < colLength - 1) {
+            while (east < colLength - currCol) {
                 east++;
                 currRow = startRow - north;
                 currCol = startColumn + east;
@@ -85,8 +81,7 @@ public class Main {
             boolean validSouth = false;
             while (south < row) {
                 south++;
-                currRow = startRow - north + south;
-                currCol = startColumn + east;
+                currRow += south;
                 validSouth = isValidLocation(map, currRow, currCol);
                 if (validSouth && currRow != prevSouthRow && currCol != prevSouthCol) { //south location is valid and its not yet check
                     prevSouthRow = currRow;
