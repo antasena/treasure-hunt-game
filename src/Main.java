@@ -1,5 +1,3 @@
-package com.company.treasurehunt;
-
 import java.util.ArrayList;
 import java.util.List;
 
